@@ -28,6 +28,20 @@ class TestUtils(unittest.TestCase):
         self.assertEqual(result.shape, mock_data.shape)
         self.assertTrue((result == mock_data).all().all())
 
+    
+    @patch('pandas.read_csv')
+    def test_load_data_faliure(self, mock_read_csv):
+        '''
+        Tests the failure of loading data 
+        '''
+
+        mock_read_csv.side_effect = IOError('File Not Found')
+
+        data_utils = DataUtils()
+        result = data_utils.load_data('None.csv')
+
+        self.assertIsNone(result)
+
 
 
 
