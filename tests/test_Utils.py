@@ -4,6 +4,7 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 import pandas as pd
+import holidays
 
 sys.path.append(os.path.abspath('scripts'))
 from Utils import DataUtils
@@ -26,6 +27,11 @@ class TestUtils(unittest.TestCase):
             'col3': [1, 2, 3, 4]
         })       
 
+        self.data_with_dates = pd.DataFrame({
+            'Date' : ['2015-07-31', '2015-01-01', '2015-12-25'],
+            'Store' : [1,2,3]
+        })
+        self.data_with_dates['Date'] = pd.to_datetime(self.data_with_dates['Date'])
 
     @patch('pandas.read_csv')
     def test_load_data_success(self, mock_read_csv):
@@ -82,6 +88,23 @@ class TestUtils(unittest.TestCase):
         result = data_utils.data_info(self.data_no_missing)
 
         self.assertTrue(result.empty)
+
+
+    def test_holiday_generator(self):
+        '''
+        Tests the function holiday_generator
+        '''
+
+        data_utils = DataUtils()
+        result = data_utils.holiday_generator(self.data_with_dates)
+
+        self.assertIsNotNone(result['Holiday'])
+        self.assertEqual(result['Holiday'].loc[0], "Not Holiday")
+        self.assertEqual(result['Holiday'].loc[1], "New Year's Day")
+        self.assertEqual(result['Holiday'].loc[2], "Christmas Day")
+
+
+        
 
 
 if __name__ == '__main__':
