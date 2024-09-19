@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import missingno as msno
+import holidays
 
 # ANSI Escape code to make the printing more appealing
 ANSI_ESC = {
@@ -147,6 +148,17 @@ class DataUtils:
         return info_df
     
 
+    def holiday_generator(self, data):
+        logger.debug("Adding holiday column...")
+        try:
+            us_holidays = holidays.US()
+            data['Holiday'] = data['Date'].apply(lambda x: us_holidays[x] if x in us_holidays else 'Not Holiday')
+            return data
+        
+        except Exception as e:
+            logger.error(f"Error in adding holiday column: {e}")
+            return data
+
 class EDA:
 
     def distribution(self, df1: pd.DataFrame, df2: pd.DataFrame, col: str, similarity_threshold: float):
@@ -164,6 +176,7 @@ class EDA:
         -------
             change_pct(float): Returns the percent change of distribution between datasets
         '''
+        logger.debug("Checking for column distribution in different dataframes....")
 
         shape1 = df1[col].shape[0]
         val1 = int(df1[col].value_counts().sort_index().values[0])
