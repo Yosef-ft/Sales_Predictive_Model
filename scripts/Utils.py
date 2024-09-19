@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+import missingno as msno
 
 # ANSI Escape code to make the printing more appealing
 ANSI_ESC = {
@@ -115,6 +116,12 @@ class DataUtils:
         print(f"---------------------")
         print(f"- {ANSI_ESC['ITALICS']}Total rows{ANSI_ESC['ENDC']}: {data.shape[0]}")
         print(f"- {ANSI_ESC['ITALICS']}Total columns{ANSI_ESC['ENDC']}: {data.shape[1]}\n")
+
+        duplicated_rows = int(data.duplicated().sum())
+        if duplicated_rows == 0:
+            print(f"{ANSI_ESC['GREEN']}No Duplicated data found in the dataset.{ANSI_ESC['ENDC']}\n")
+        else:
+             print(f"- {ANSI_ESC['RED']}Number of duplicated rows are{ANSI_ESC['ENDC']}: {duplicated_rows}")
         
         if info_df.shape[0] > 0:
             print(f"{ANSI_ESC['BOLD']}Missing Data Summary{ANSI_ESC['ENDC']}")
@@ -132,9 +139,62 @@ class DataUtils:
             else:
                 print(f"{ANSI_ESC['GREEN']}No columns with more than 50% missing values.{ANSI_ESC['ENDC']}")
         else:
-            print(f"{ANSI_ESC['ITALICS']}No missing data found in the dataset.{ANSI_ESC['ENDC']}")
+            print(f"{ANSI_ESC['GREEN']}No missing data found in the dataset.{ANSI_ESC['ENDC']}")
 
         print(f"\n{ANSI_ESC['BOLD']}Detailed Missing Data Information{ANSI_ESC['ENDC']}")
         print(info_df)
 
         return info_df
+    
+
+class EDA:
+
+    def distribution(self, df1: pd.DataFrame, df2: pd.DataFrame, col: str, similarity_threshold: float):
+        '''
+        This funcion checks the distribution of column in two dataframes 
+
+        Parameter:
+        ----------
+            df1(pd.DataFrame): DataFrame 1
+            df2(pd.DataFrmae): DataFrame 2
+            col(str): the column you want to check the distribution
+            similarity_threshold(float): The allowed percentage difference between the two dataframes to be classified as similar
+
+        Returns:
+        -------
+            change_pct(float): Returns the percent change of distribution between datasets
+        '''
+
+        shape1 = df1[col].shape[0]
+        val1 = int(df1[col].value_counts().sort_index().values[0])
+        index1 = df1[col].value_counts().index[0]
+
+        shape2 = df2[col].shape[0]
+        val2 = int(df2[col].value_counts().sort_index().values[0])
+        index2 = df2[col].value_counts().index[0]
+
+        pct1 = round(val1 * 100 / shape1, 2)
+        pct2 = round(val2 * 100 / shape2, 2)
+
+        change_pct = round(np.abs(pct1 - pct2), 2)
+
+        print(f"{ANSI_ESC['BOLD']}Similarity Overview{ANSI_ESC['ENDC']}\n")
+        print(f"- The first dataset has {pct1}% of the `{index1}` value")
+        print(f"- The second dataset has {pct2}% of the `{index2}` value")
+
+        if change_pct > similarity_threshold:
+            print(f"{ANSI_ESC['RED']} The distribution of the column {col} are not similar{ANSI_ESC['ENDC']}\n")
+            print(f"{ANSI_ESC['ITALICS']} The percent change between the two dataset's value is {change_pct}% ")
+            
+            
+
+        else:
+            print(f"{ANSI_ESC['GREEN']} The distribution of the column {col} are similar{ANSI_ESC['ENDC']}\n")
+            print(f"{ANSI_ESC['ITALICS']} The percent change between the two dataset's value is {change_pct}% ")
+
+        return change_pct
+            
+        
+
+
+        
