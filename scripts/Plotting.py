@@ -121,4 +121,74 @@ class Plots:
                 marker='x'
             )        
         except Exception as e:
-            logger.error(f'Error while plotting line plot {e}')    
+            logger.error(f'Error while plotting line plot {e}') 
+
+
+    def sales_weekend_weekday(self, data: pd.DataFrame, all_weekday: bool):   
+        '''
+        This function helps compare which stores are open on all weekdays and tell how it affects their sales on weekends
+        
+        Parameters:
+            data(pd.DataFrame)
+            all_weekday(bool): True for stores that are open for all weekday
+
+        Returns:
+            sns.plot:  A Seaborn plot visualizing the effect of weekday openings on weekend sales.
+
+        '''
+        logger.debug('plotting the effect of weekday openings on weekend sales...')
+
+        data['DayOfWeek'] = data['Date'].dt.dayofweek
+        data['IsWeekend'] = data['DayOfWeek'].apply(lambda x: x >= 5)
+        weekdays = data[(data['DayOfWeek'] < 5) & (data['Open'] == 1)]
+
+        # Gives the number of unique weekdays each store is open.
+        weekday_open_counts = weekdays.groupby('Store')['Date'].nunique()
+
+        # Gives the total number of unique weekdays in the dataset
+        unique_weekdays = data[data['DayOfWeek'] < 5]['Date'].nunique()
+        
+        if all_weekday:
+            stores_open = weekday_open_counts[weekday_open_counts == unique_weekdays].index
+        else: 
+            stores_open = weekday_open_counts[weekday_open_counts != unique_weekdays].index
+
+        weekend_sales = data[(data['Store'].isin(stores_open)) & (data['IsWeekend'] == True)]
+        weekday_sales = data[(data['Store'].isin(stores_open)) & (data['IsWeekend'] == False)]
+
+        weekend_sales_agg = weekend_sales.groupby('Store')['Sales'].sum()
+        weekday_sales_agg = weekday_sales.groupby('Store')['Sales'].sum()
+
+        weekend_sales_agg = pd.DataFrame(weekend_sales_agg)
+        weekday_sales_agg = pd.DataFrame(weekday_sales_agg)
+
+        sns.lineplot(
+            x=weekend_sales_agg.head(10).index,    
+            y=weekend_sales_agg.head(10)['Sales'], 
+            label='Weekend sales', 
+            color='lightblue', 
+            linestyle='-', 
+            linewidth=2,
+            marker='o'
+        )
+
+        sns.lineplot(
+            x=weekday_sales_agg.head(10).index,
+            y=weekday_sales_agg.head(10)['Sales'] ,
+            label = 'Weekday sales',
+            color='salmon',
+            linestyle='--',
+            linewidth=2,
+            markers='x'
+        )
+
+        plt.xlabel('Store')
+        plt.ylabel('Weekend Sales')
+
+        if all_weekday:
+            plt.title('Sales for Stores Open All Weekdays')
+        else:
+            plt.title('Sales for the top 10 Stores not Open on All Weekdays')
+
+        plt.tight_layout()
+        plt.show()        
