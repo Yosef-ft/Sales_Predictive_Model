@@ -133,7 +133,7 @@ class Plots:
             all_weekday(bool): True for stores that are open for all weekday
 
         Returns:
-            sns.plot:  A Seaborn plot visualizing the effect of weekday openings on weekend sales.
+            sns.lineplot:  A Seaborn plot visualizing the effect of weekday openings on weekend sales.
 
         '''
         logger.debug('plotting the effect of weekday openings on weekend sales...')
@@ -191,4 +191,32 @@ class Plots:
             plt.title('Sales for the top 10 Stores not Open on All Weekdays')
 
         plt.tight_layout()
-        plt.show()        
+        plt.show()       
+
+
+    def competition_sales(self, data: pd.DataFrame):
+        '''
+        Plots the effect of competition distance on sales
+
+        Parameters:
+        ----------
+            data(pd.DataFrame)
+
+        Returns:
+        --------
+            sns.lineplot
+        ''' 
+
+        logger.debug('Plotting effect of competition on sales....')
+
+        try:
+            data['CompetitionDistance_Decile'] = pd.qcut(data['CompetitionDistance'], 10, labels=False)
+            sns.lineplot(
+                x=data['CompetitionDistance_Decile'],
+                y=data['Sales'],
+                label = 'Competition distance vs. sales',
+                linestyle='--',
+                color = 'darkblue'
+            )
+        except Exception as e:
+            logger.error(f'Error plotting sns.lineplot {e}')
