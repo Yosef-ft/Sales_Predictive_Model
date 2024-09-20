@@ -208,6 +208,43 @@ class EDA:
         return change_pct
             
         
+    def stores_promo(self, data)->pd.DataFrame:
+        '''
+        This function helps with identify which stores need Pormo and which stores perform better without Promo
+
+        Parameters:
+        ----------
+            data(pd.DataFrame)
+
+        Returns:
+        -------
+            store_promo_relation(pd.DataFrame): A ratio of sales between stores with promotions and those without promotions.
+        '''
+
+        store_with_promo = data[data['Promo'] == 1].groupby(by='Store')['Sales'].sum()
+        store_no_promo = data[data['Promo'] == 0].groupby(by='Store')['Sales'].sum()
+
+        ratios_of_sales = round(store_no_promo * 100 / store_with_promo, 2)
+        store_Promo_relation = (pd.DataFrame(ratios_of_sales)).rename({'Sales' : '(No Promo / with Promo)%'}, axis =1).sort_values(by='(No Promo / with Promo)%')
+        store_Promo_relation['store no promo'] = store_no_promo
+        store_Promo_relation['store with promo'] = store_with_promo
+
+        # Stores that will benefit from Promo. 
+        top_stores_need_promo = store_Promo_relation[store_Promo_relation['(No Promo / with Promo)%'] < 60]
+        
+        no_promo = store_Promo_relation.tail()
+
+        print(f'{ANSI_ESC["BOLD"]}Sales and Promo Overview{ANSI_ESC['ENDC']}\n')
+        print(f'{ANSI_ESC['RED']} The top three columns that experience more than a 40% increase in total sales when using promotions.{ANSI_ESC['ENDC']}')
+        if not top_stores_need_promo.empty:
+            for i in range(0, 3):
+                print(f'{ANSI_ESC["ITALICS"]} - Store number {top_stores_need_promo.index[i]} has experienced a boost in sales of {100 - top_stores_need_promo.values[i][0]}% when using Promo{ANSI_ESC['ENDC']}')
+
+        print('\n\n')
+        print(f'{ANSI_ESC['GREEN']} The top three columns that are better off without Promos.{ANSI_ESC['ENDC']}')
+        for i in range(0,3):
+            print(f'{ANSI_ESC["ITALICS"]} - Store number {no_promo.index[4 - i]} has experienced a boost in sales of {round(no_promo.values[4 - i][0] - 100, 2)}% without using Promo{ANSI_ESC['ENDC']}')
 
 
+        return store_Promo_relation
         
