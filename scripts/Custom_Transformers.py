@@ -6,6 +6,8 @@ from scipy.stats import zscore
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import SimpleImputer
 
+from Utils import DataUtils
+
 class MissingDataHandler(BaseEstimator, TransformerMixin):
     '''
     Custom Trnasformer for handling missing data
@@ -20,24 +22,27 @@ class MissingDataHandler(BaseEstimator, TransformerMixin):
     --------
 
     '''
-    def __init__(self, strategy, fill_value = None ,missing_values = np.nan):
+    def __init__(self, strategy, cols: list, fill_value = None ,missing_values = np.nan):
         self.missing_values= missing_values
         self.strategy= strategy
         self.fill_value= fill_value
         self.imputer = None
+        self.cols = cols
 
     def fit(self, X, y=None):
     
         self.imputer = SimpleImputer(strategy=self.strategy, fill_value=self.fill_value, missing_values=self.missing_values)
-        self.imputer.fit(X)
+        self.imputer.fit(X[self.cols])
         return self
     
     def transform(self, X, y=None):
         
+        X_transformed = X.copy()
+
         if self.imputer == None:
             raise ValueError("The imputer has not been fitted yet. Call fit() before transform().")
         
-        X_transformed = self.imputer.transform(X)
+        X_transformed[self.cols] = self.imputer.transform(X[self.cols])
 
         return pd.DataFrame(X_transformed, columns=X.columns)
     
@@ -58,7 +63,7 @@ class OutlierHandler(BaseEstimator, TransformerMixin):
         pd.Dataframe
     '''
 
-    def __init__(self, method: str, factor: float = 1.5, threshold: float = 3, cols = None):
+    def __init__(self, method: str, factor: float = 1.5, threshold: float = 3, cols: list = None):
         self.method = method
         self.factor = factor
         self.threshold = threshold
@@ -114,8 +119,7 @@ class ProperDtypes(BaseEstimator, TransformerMixin):
         pd.DataFrame: Dataframe with the proper datatypes
     '''
 
-    def __init__ (self, data: pd.DataFrame ,cols: list, proper_type: str):
-        self.data = data
+    def __init__ (self, cols: list, proper_type: str):
         self.cols = cols
         self.proper_type = proper_type
 
@@ -131,3 +135,35 @@ class ProperDtypes(BaseEstimator, TransformerMixin):
         X_transformed[self.cols] =  X_transformed[self.cols].astype(self.proper_type)
 
         return X_transformed
+    
+
+
+class DateFeatures(BaseEstimator, TransformerMixin):
+    '''
+    Feature extraction: This will generate a date feature
+
+    Returns:
+    ----------
+        pd.DataFrame: Dataframe with more features
+    '''
+
+    def __init__(self):
+        self.data_utils = DataUtils()
+
+    def fit(self, X, y=None):
+        return self
+    
+    def transform(self, X, y=None):
+
+        X_copy = X.copy()
+
+        
+        X_copy['quarter'] =   X_copy['Date'].dt.quarter
+        X_copy['month'] =     X_copy['Date'].dt.month
+        X_copy['year'] =      X_copy['Date'].dt.year 
+        X_copy['dayofyear'] = X_copy['Date'].dt.dayofyear
+        X_copy['weekdays'] =  X_copy['dayofweek'].apply(lambda x: x < 5)
+        X_copy['weekends'] =  X_copy['dayofweek'].apply(lambda x: x >= 5)
+        X_copy = self.data_utils.holiday_generator(X_copy)
+
+        return X_copy
