@@ -68,7 +68,7 @@ class DataUtils:
         '''
         logger.debug("Loading data from file...")
         try:
-            data = pd.read_csv(f"../data/{file_name}")
+            data = pd.read_csv(f"../data/{file_name}", low_memory=False)
             return data
 
         except Exception as e:

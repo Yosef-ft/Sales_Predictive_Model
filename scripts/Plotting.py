@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import missingno as msno
 from Utils import logger
+from statsmodels.distributions.empirical_distribution import ECDF
 
 class Plots:
     # def __init__(self, data):
@@ -220,3 +221,19 @@ class Plots:
             )
         except Exception as e:
             logger.error(f'Error plotting sns.lineplot {e}')
+
+
+    def plot_ecdf (self, column, title= 'ECDF Plot', xlabel = 'Sales', ylabel = 'Percentage'):
+        '''
+        Funtion to plot ecdf taking a column of data as input
+
+        Parameters:
+            column(pd.Series)
+        '''
+        cdf = ECDF(column)
+
+        plt.plot(cdf.x, cdf.y, marker = '.', linestyle='none')
+        plt.title(title)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.margins(0.02)            
