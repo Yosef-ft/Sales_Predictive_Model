@@ -5,3 +5,8 @@ data
 __pycache__
 
 logs
+
+
+# Best models saved to models dir
+preprocessing_pipeline.pkl
+model_22-09-2024-12-49-52.pkl
