@@ -6,6 +6,8 @@ __pycache__
 
 logs
 
+# Default Database of Django
+db.sqlite3
 
 # Best models saved to models dir
 preprocessing_pipeline.pkl
