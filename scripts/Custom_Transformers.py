@@ -5,6 +5,7 @@ from scipy.stats import zscore
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from Utils import DataUtils
 
@@ -162,8 +163,59 @@ class DateFeatures(BaseEstimator, TransformerMixin):
         X_copy['month'] =     X_copy['Date'].dt.month
         X_copy['year'] =      X_copy['Date'].dt.year 
         X_copy['dayofyear'] = X_copy['Date'].dt.dayofyear
-        X_copy['weekdays'] =  X_copy['dayofweek'].apply(lambda x: x < 5)
-        X_copy['weekends'] =  X_copy['dayofweek'].apply(lambda x: x >= 5)
+        X_copy['weekdays'] =  X_copy['DayOfWeek'].apply(lambda x: x < 6)
+        X_copy['weekends'] =  X_copy['DayOfWeek'].apply(lambda x: x >= 6)
         X_copy = self.data_utils.holiday_generator(X_copy)
+        X_copy.drop('Date', axis=1, inplace=True)
 
         return X_copy
+    
+
+class Scaler(BaseEstimator, TransformerMixin):
+    '''
+    This class calculates scales the data for a specific column
+
+    Parameters:
+    -----------
+        Cols(list): columns to scale
+        scaler_type(str): StandardScaler or MinMaxScaler
+
+    Returns:
+    --------
+        pd.DataFrame: A datframe with scaled columns
+
+    '''
+
+
+    def __init__(self, cols: list, scaler_type: str):
+
+        if scaler_type not in ['StandardScaler', 'MinMaxScaler']:
+            raise ValueError("scaler_type must be 'StandardScaler' or 'MinMaxScaler'.")        
+        
+        self.scaler = None
+        self.cols = cols
+        self.scaler_type = scaler_type
+
+
+    def fit(self, X, y=None):
+
+        if self.scaler_type == 'MinMaxScaler':
+            self.scaler = MinMaxScaler()
+        elif self.scaler_type == 'StandardScaler':
+            self.scaler = StandardScaler()
+        
+        self.scaler.fit(X[self.cols])
+ 
+        return self
+    
+
+    def transform(self, X, y=None):
+
+        if self.scaler is None:
+            raise ValueError("The Scaler has not been fitted yet. Call fit() before transform.")
+        
+        X_transformed = X.copy()
+        X_transformed[self.cols] = self.scaler.transform(X[self.cols])
+        
+        return X_transformed
+        
